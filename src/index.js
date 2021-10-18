@@ -504,6 +504,7 @@ class PhoneInput extends React.Component {
     const { value } = e.target;
     const { prefix, onChange } = this.props;
 
+    let selectionStart = e.target.selectionStart;
     let formattedNumber = this.props.disableCountryCode ? '' : prefix;
     let newSelectedCountry = this.state.selectedCountry;
     let freezeSelection = this.state.freezeSelection;
@@ -564,7 +565,7 @@ class PhoneInput extends React.Component {
       newSelectedCountry = newSelectedCountry.dialCode ? newSelectedCountry : selectedCountry;
     }
 
-    let caretPosition = e.target.selectionStart;
+    let caretPosition = selectionStart;
     const oldFormattedText = this.state.formattedNumber;
     const diff = formattedNumber.length - oldFormattedText.length;
 
@@ -583,7 +584,23 @@ class PhoneInput extends React.Component {
         this.numberInputRef.setSelectionRange(formattedNumber.length - 1, formattedNumber.length - 1);
       }
       else if (caretPosition > 0 && oldFormattedText.length >= formattedNumber.length) {
+        if (formattedNumber.charAt(selectionStart) == '-' && diff > 0) {
+          caretPosition += 1;
+        }
+
         this.numberInputRef.setSelectionRange(caretPosition, caretPosition);
+      }
+      else if (caretPosition > 0 && oldFormattedText.length < formattedNumber.length) {
+          if (diff == 2 && selectionStart < formattedNumber.length && Math.abs(selectionStart - formattedNumber.length) >= 2) {
+            selectionStart -= 1;
+          }
+
+        if (formattedNumber.charAt(selectionStart) == '-' && diff < 2) {
+          selectionStart += 1;
+        }
+
+        selectionStart = selectionStart - 1 + diff;
+        this.numberInputRef.setSelectionRange(selectionStart, selectionStart);
       }
 
       if (onChange) onChange(formattedNumber.replace(/[^0-9]+/g,''), this.getCountryData(), e, formattedNumber);
